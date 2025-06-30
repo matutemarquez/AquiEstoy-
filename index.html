@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reporte con Marcador y Muñeco</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    crossorigin=""
+  />
+  <style>
+    body, html {
+      margin: 0; padding: 0; height: 100%;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+    #map {
+      flex: 1;
+      width: 100%;
+    }
+    #form-popup {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 1000;
+      width: 300px;
+    }
+    #form-popup label {
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 5px;
+    }
+    #form-popup textarea {
+      width: 100%;
+      resize: vertical;
+      height: 60px;
+      padding: 5px;
+      font-size: 14px;
+    }
+    #form-popup button {
+      margin-top: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    #form-popup #cancel-btn {
+      background: #ccc;
+      margin-left: 10px;
+    }
+    #overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="overlay"></div>
+
+<div id="form-popup">
+  <h3>Agregar reporte</h3>
+  <form id="popup-form">
+    <label for="desc">Descripción:</label>
+    <textarea id="desc" required placeholder="Ej: Persona necesita ayuda"></textarea>
+    <div style="text-align: right;">
+      <button type="submit">Agregar</button>
+      <button type="button" id="cancel-btn">Cancelar</button>
+    </div>
+  </form>
+</div>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+  crossorigin=""
+></script>
+
+<script>
+  // Inicializar mapa
+  const map = L.map('map').setView([-34.9011, -56.1645], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Icono personalizado tipo muñeco
+  const iconPersona = L.icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/147/147144.png', // icono simple persona
+    iconSize: [32, 37],
+    iconAnchor: [16, 37],
+    popupAnchor: [0, -37]
+  });
+
+  // Variables para manejar estado del popup
+  let tempLatLng = null; // guarda la posición del click
+
+  const overlay = document.getElementById('overlay');
+  const formPopup = document.getElementById('form-popup');
+  const popupForm = document.getElementById('popup-form');
+  const descInput = document.getElementById('desc');
+  const cancelBtn = document.getElementById('cancel-btn');
+
+  // Funciones para mostrar y ocultar popup
+  function showPopup() {
+    overlay.style.display = 'block';
+    formPopup.style.display = 'block';
+    descInput.focus();
+  }
+
+  function hidePopup() {
+    overlay.style.display = 'none';
+    formPopup.style.display = 'none';
+    descInput.value = '';
+    tempLatLng = null;
+  }
+
+  // Evento clic en el mapa
+  map.on('click', function(e) {
+    tempLatLng = e.latlng;
+    showPopup();
+  });
+
+  // Cancelar
+  cancelBtn.addEventListener('click', () => {
+    hidePopup();
+  });
+
+  // Enviar formulario
+  popupForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const desc = descInput.value.trim();
+    if (!desc) {
+      alert('Por favor, escribí una descripción.');
+      return;
+    }
+    if (tempLatLng) {
+      // Crear marcador con icono personalizado y popup con descripción
+      const marker = L.marker(tempLatLng, { icon: iconPersona }).addTo(map);
+      marker.bindPopup(`<b>Reporte:</b><br>${desc}`).openPopup();
+
+      hidePopup();
+    }
+  });
+
+  // Cerrar popup si se clickea fuera
+  overlay.addEventListener('click', () => {
+    hidePopup();
+  });
+</script>
+
+</body>
+</html>
